@@ -1,6 +1,9 @@
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated"
 import { COLORS } from "../constants/colors"
+
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity)
 
 const CustomButton = ({
   title,
@@ -12,13 +15,34 @@ const CustomButton = ({
   variant = "primary",
   size = "medium",
 }) => {
+  const scale = useSharedValue(1)
+  const opacity = useSharedValue(1)
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }))
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.95, { damping: 15, stiffness: 300 })
+    opacity.value = withTiming(0.8, { duration: 100 })
+  }
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 })
+    opacity.value = withTiming(1, { duration: 100 })
+  }
+
   const getButtonStyle = () => {
     switch (variant) {
       case "secondary":
         return styles.secondaryButton
       case "outline":
-      case "text": // Added text variant
         return styles.outlineButton
+      case "ghost":
+        return styles.ghostButton
+      case "glass":
+        return styles.glassButton
       default:
         return styles.primaryButton
     }
@@ -27,8 +51,10 @@ const CustomButton = ({
   const getTextStyle = () => {
     switch (variant) {
       case "outline":
-      case "text": // Added text variant
+      case "ghost":
         return styles.outlineButtonText
+      case "glass":
+        return styles.glassButtonText
       default:
         return styles.buttonText
     }
@@ -45,16 +71,35 @@ const CustomButton = ({
     }
   }
 
-  if (variant === "primary") {
+  const getGradientColors = () => {
+    switch (variant) {
+      case "secondary":
+        return COLORS.secondaryGradient
+      case "accent":
+        return COLORS.accentGradient
+      case "success":
+        return COLORS.successGradient
+      case "error":
+        return COLORS.errorGradient
+      case "warning":
+        return COLORS.warningGradient
+      default:
+        return COLORS.primaryGradient
+    }
+  }
+
+  if (variant === "primary" || variant === "secondary" || variant === "accent" || variant === "success" || variant === "error" || variant === "warning") {
     return (
-      <TouchableOpacity
-        style={[styles.button, getSizeStyle(), style]}
+      <AnimatedTouchableOpacity
+        style={[styles.button, getSizeStyle(), animatedStyle, style]}
         onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         disabled={disabled || loading}
-        activeOpacity={0.8}
+        activeOpacity={1}
       >
         <LinearGradient
-          colors={[COLORS.primary, COLORS.primaryLight]}
+          colors={getGradientColors()}
           style={[styles.gradient, getSizeStyle()]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -65,35 +110,42 @@ const CustomButton = ({
             <Text style={[getTextStyle(), textStyle]}>{title}</Text>
           )}
         </LinearGradient>
-      </TouchableOpacity>
+      </AnimatedTouchableOpacity>
     )
   }
 
   return (
-    <TouchableOpacity
-      style={[styles.button, getButtonStyle(), getSizeStyle(), style]}
+    <AnimatedTouchableOpacity
+      style={[styles.button, getButtonStyle(), getSizeStyle(), animatedStyle, style]}
       onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={disabled || loading}
-      activeOpacity={0.8}
+      activeOpacity={1}
     >
       {loading ? (
-        <ActivityIndicator color={variant === "outline" ? COLORS.primary : COLORS.white} size="small" />
+        <ActivityIndicator color={variant === "outline" || variant === "ghost" ? COLORS.primary : COLORS.white} size="small" />
       ) : (
         <Text style={[getTextStyle(), textStyle]}>{title}</Text>
       )}
-    </TouchableOpacity>
+    </AnimatedTouchableOpacity>
   )
 }
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: "hidden",
+    shadowColor: COLORS.shadowDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   gradient: {
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 16,
   },
   primaryButton: {
     backgroundColor: COLORS.primary,
@@ -111,30 +163,57 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     justifyContent: "center",
     alignItems: "center",
+    shadowOpacity: 0.05,
+  },
+  ghostButton: {
+    backgroundColor: COLORS.primary + "15",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowOpacity: 0.05,
+  },
+  glassButton: {
+    backgroundColor: COLORS.glassBg,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowOpacity: 0.1,
   },
   smallButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    minHeight: 40,
   },
   mediumButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 28,
+    minHeight: 52,
   },
   largeButton: {
-    paddingVertical: 18,
-    paddingHorizontal: 32,
+    paddingVertical: 20,
+    paddingHorizontal: 36,
+    minHeight: 60,
   },
   buttonText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
     textAlign: "center",
+    letterSpacing: 0.5,
   },
   outlineButtonText: {
     color: COLORS.primary,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
     textAlign: "center",
+    letterSpacing: 0.5,
+  },
+  glassButtonText: {
+    color: COLORS.textPrimary,
+    fontSize: 16,
+    fontWeight: "700",
+    textAlign: "center",
+    letterSpacing: 0.5,
   },
 })
 

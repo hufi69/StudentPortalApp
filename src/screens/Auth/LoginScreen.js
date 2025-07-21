@@ -10,16 +10,20 @@ import {
   Platform,
   TouchableOpacity,
   StatusBar,
+  Dimensions,
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
+import Animated, { FadeInDown, FadeInUp, SlideInRight } from "react-native-reanimated"
 
 import CustomButton from "../../components/CustomButton"
 import InputField from "../../components/InputField"
 import { COLORS } from "../../constants/colors"
 import { ROUTES } from "../../constants/routes"
-import { loginUser } from "../../api/auth" // Import enhanced auth API
+import { loginUser } from "../../api/auth"
+
+const { width, height } = Dimensions.get("window")
 
 const LoginScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
@@ -47,7 +51,6 @@ const LoginScreen = ({ navigation }) => {
   const validateForm = () => {
     const newErrors = {}
 
-    // Email validation
     if (!formData.email.trim()) {
       newErrors.email = "Email is required"
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -56,7 +59,6 @@ const LoginScreen = ({ navigation }) => {
       newErrors.email = "Please use your university email (@university.edu.pk)"
     }
 
-    // Password validation
     if (!formData.password) {
       newErrors.password = "Password is required"
     } else if (formData.password.length < 8) {
@@ -70,7 +72,6 @@ const LoginScreen = ({ navigation }) => {
   const handleLogin = async () => {
     if (!validateForm()) return
 
-    // Security: Limit login attempts
     if (loginAttempts >= 5) {
       setErrors({ general: "Too many failed attempts. Please try again later." })
       return
@@ -78,21 +79,18 @@ const LoginScreen = ({ navigation }) => {
 
     setLoading(true)
     try {
-      // Call our enhanced login API
       const result = await loginUser(formData.email.trim(), formData.password)
 
       if (result.success) {
         console.log("Login successful!", result.user)
-        // Reset login attempts on successful login
         setLoginAttempts(0)
-        navigation.replace(ROUTES.MAIN_DRAWER) // Navigate to Dashboard
+        navigation.replace(ROUTES.MAIN_DRAWER)
       }
     } catch (error) {
       console.error("Login error:", error.message)
       setLoginAttempts((prev) => prev + 1)
       setErrors({ general: error.message || "Login failed. Please try again." })
 
-      // If user not found, suggest signing up
       if (error.message.includes("No account found")) {
         setTimeout(() => {
           navigation.navigate(ROUTES.SIGNUP)
@@ -109,24 +107,35 @@ const LoginScreen = ({ navigation }) => {
 
   const navigateToForgotPassword = () => {
     console.log("Navigate to Forgot Password")
-    // TODO: Implement forgot password functionality
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      <LinearGradient colors={[COLORS.primary, COLORS.primaryLight]} style={styles.headerGradient}>
-        <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Ionicons name="school-outline" size={40} color={COLORS.white} />
-            </View>
-            <Text style={styles.logoText}>Student Portal</Text>
-            <Text style={styles.logoSubtext}>University Management System</Text>
-          </View>
-        </View>
-      </LinearGradient>
+      {/* Background Gradient */}
+      <LinearGradient
+        colors={[...COLORS.primaryGradient, COLORS.accentLight]}
+        style={styles.backgroundGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+
+      {/* Floating Elements */}
+      <View style={styles.floatingElements}>
+        <Animated.View 
+          entering={FadeInUp.delay(100).springify()}
+          style={[styles.floatingCircle, styles.circle1]} 
+        />
+        <Animated.View 
+          entering={FadeInUp.delay(200).springify()}
+          style={[styles.floatingCircle, styles.circle2]} 
+        />
+        <Animated.View 
+          entering={FadeInUp.delay(300).springify()}
+          style={[styles.floatingCircle, styles.circle3]} 
+        />
+      </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardView}>
         <ScrollView
@@ -134,89 +143,132 @@ const LoginScreen = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.formContainer}>
-            <View style={styles.welcomeSection}>
-              <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-              <Text style={styles.welcomeSubtitle}>Sign in with your university credentials</Text>
+          {/* Header Section */}
+          <Animated.View 
+            entering={FadeInDown.springify()}
+            style={styles.headerSection}
+          >
+            <View style={styles.logoContainer}>
+              <LinearGradient
+                colors={["rgba(255,255,255,0.3)", "rgba(255,255,255,0.1)"]}
+                style={styles.logoCircle}
+              >
+                <Ionicons name="school-outline" size={48} color={COLORS.white} />
+              </LinearGradient>
+              <Text style={styles.logoText}>Student Portal</Text>
+              <Text style={styles.logoSubtext}>Your Gateway to Academic Excellence</Text>
             </View>
+          </Animated.View>
 
-            <View style={styles.form}>
-              <InputField
-                label="University Email"
-                placeholder="your.name@university.edu.pk"
-                value={formData.email}
-                onChangeText={(value) => handleInputChange("email", value.toLowerCase())}
-                keyboardType="email-address"
-                leftIcon="mail-outline"
-                error={errors.email}
-                autoCapitalize="none"
-              />
-
-              <InputField
-                label="Password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChangeText={(value) => handleInputChange("password", value)}
-                secureTextEntry
-                leftIcon="lock-closed-outline"
-                error={errors.password}
-              />
-
-              <TouchableOpacity style={styles.forgotPasswordContainer} onPress={navigateToForgotPassword}>
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-              </TouchableOpacity>
-
-              {errors.general && (
-                <View style={styles.errorContainer}>
-                  <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
-                  <Text style={styles.generalErrorText}>{errors.general}</Text>
-                </View>
-              )}
-
-              {/* Security Info */}
-              {loginAttempts > 2 && (
-                <View style={styles.warningContainer}>
-                  <Ionicons name="warning-outline" size={16} color={COLORS.warning} />
-                  <Text style={styles.warningText}>
-                    {5 - loginAttempts} attempts remaining before temporary lockout
-                  </Text>
-                </View>
-              )}
-
-              <CustomButton
-                title="Sign In"
-                onPress={handleLogin}
-                loading={loading}
-                disabled={loginAttempts >= 5}
-                style={styles.loginButton}
-              />
-
-              <View style={styles.dividerContainer}>
-                <View style={styles.divider} />
-                <Text style={styles.dividerText}>OR</Text>
-                <View style={styles.divider} />
+          {/* Form Container */}
+          <Animated.View 
+            entering={SlideInRight.delay(400).springify()}
+            style={styles.formContainer}
+          >
+            <LinearGradient
+              colors={["rgba(255,255,255,0.95)", "rgba(255,255,255,0.9)"]}
+              style={styles.formGradient}
+            >
+              <View style={styles.welcomeSection}>
+                <Text style={styles.welcomeTitle}>Welcome Back!</Text>
+                <Text style={styles.welcomeSubtitle}>Sign in to continue your journey</Text>
               </View>
 
-              <View style={styles.socialButtonsContainer}>
-                <TouchableOpacity style={styles.socialButton}>
-                  <Ionicons name="logo-google" size={20} color={COLORS.error} />
-                  <Text style={styles.socialButtonText}>Google</Text>
+              <View style={styles.form}>
+                <InputField
+                  label="University Email"
+                  placeholder="your.name@university.edu.pk"
+                  value={formData.email}
+                  onChangeText={(value) => handleInputChange("email", value.toLowerCase())}
+                  keyboardType="email-address"
+                  leftIcon="mail-outline"
+                  error={errors.email}
+                  autoCapitalize="none"
+                />
+
+                <InputField
+                  label="Password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChangeText={(value) => handleInputChange("password", value)}
+                  secureTextEntry
+                  leftIcon="lock-closed-outline"
+                  error={errors.password}
+                />
+
+                <TouchableOpacity style={styles.forgotPasswordContainer} onPress={navigateToForgotPassword}>
+                  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.socialButton}>
-                  <Ionicons name="logo-facebook" size={20} color="#1877F2" />
-                  <Text style={styles.socialButtonText}>Facebook</Text>
+                {errors.general && (
+                  <Animated.View 
+                    entering={FadeInDown.springify()}
+                    style={styles.errorContainer}
+                  >
+                    <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
+                    <Text style={styles.generalErrorText}>{errors.general}</Text>
+                  </Animated.View>
+                )}
+
+                {loginAttempts > 2 && (
+                  <Animated.View 
+                    entering={FadeInDown.springify()}
+                    style={styles.warningContainer}
+                  >
+                    <Ionicons name="warning-outline" size={16} color={COLORS.warning} />
+                    <Text style={styles.warningText}>
+                      {5 - loginAttempts} attempts remaining before temporary lockout
+                    </Text>
+                  </Animated.View>
+                )}
+
+                <CustomButton
+                  title="Sign In"
+                  onPress={handleLogin}
+                  loading={loading}
+                  disabled={loginAttempts >= 5}
+                  style={styles.loginButton}
+                  variant="primary"
+                  size="large"
+                />
+
+                <View style={styles.dividerContainer}>
+                  <View style={styles.divider} />
+                  <Text style={styles.dividerText}>OR</Text>
+                  <View style={styles.divider} />
+                </View>
+
+                <View style={styles.socialButtonsContainer}>
+                  <TouchableOpacity style={styles.socialButton}>
+                    <LinearGradient
+                      colors={["#db4437", "#cc2b1d"]}
+                      style={styles.socialButtonGradient}
+                    >
+                      <Ionicons name="logo-google" size={20} color={COLORS.white} />
+                      <Text style={styles.socialButtonText}>Google</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.socialButton}>
+                    <LinearGradient
+                      colors={["#1877F2", "#166fe5"]}
+                      style={styles.socialButtonGradient}
+                    >
+                      <Ionicons name="logo-facebook" size={20} color={COLORS.white} />
+                      <Text style={styles.socialButtonText}>Facebook</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.signupContainer}>
+                <Text style={styles.signupText}>Don't have an account? </Text>
+                <TouchableOpacity onPress={navigateToSignup}>
+                  <Text style={styles.signupLink}>Sign Up</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-
-            <View style={styles.signupContainer}>
-              <Text style={styles.signupText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={navigateToSignup}>
-                <Text style={styles.signupLink}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+            </LinearGradient>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -226,73 +278,118 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.primary,
   },
-  headerGradient: {
-    paddingBottom: 40,
+  backgroundGradient: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
   },
-  header: {
-    paddingTop: 20,
-    paddingHorizontal: 24,
-    alignItems: "center",
+  floatingElements: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
   },
-  logoContainer: {
-    alignItems: "center",
-    marginBottom: 20,
+  floatingCircle: {
+    position: "absolute",
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 100,
   },
-  logoCircle: {
+  circle1: {
+    width: 120,
+    height: 120,
+    top: height * 0.1,
+    right: -40,
+  },
+  circle2: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
+    top: height * 0.3,
+    left: -20,
   },
-  logoText: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: COLORS.white,
-    marginBottom: 4,
-  },
-  logoSubtext: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
-    textAlign: "center",
+  circle3: {
+    width: 60,
+    height: 60,
+    top: height * 0.7,
+    right: 40,
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
+    paddingHorizontal: 24,
+  },
+  headerSection: {
+    flex: 0.4,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 60,
+  },
+  logoContainer: {
+    alignItems: "center",
+  },
+  logoCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.3)",
+  },
+  logoText: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: COLORS.white,
+    marginBottom: 8,
+    letterSpacing: -1,
+  },
+  logoSubtext: {
+    fontSize: 16,
+    color: "rgba(255, 255, 255, 0.85)",
+    textAlign: "center",
+    fontWeight: "500",
   },
   formContainer: {
+    flex: 0.6,
+    marginTop: 40,
+    borderRadius: 32,
+    overflow: "hidden",
+    shadowColor: COLORS.shadowDark,
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.25,
+    shadowRadius: 25,
+    elevation: 20,
+  },
+  formGradient: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: -20,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 24,
+    padding: 32,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
   },
   welcomeSection: {
     marginBottom: 32,
     alignItems: "center",
   },
   welcomeTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 28,
+    fontWeight: "800",
     color: COLORS.textPrimary,
     marginBottom: 8,
+    letterSpacing: -0.5,
   },
   welcomeSubtitle: {
     fontSize: 16,
     color: COLORS.textSecondary,
     textAlign: "center",
+    fontWeight: "500",
   },
   form: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   forgotPasswordContainer: {
     alignItems: "flex-end",
@@ -306,30 +403,36 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FEF2F2",
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: COLORS.error + "15",
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.error + "30",
   },
   generalErrorText: {
     fontSize: 14,
     color: COLORS.error,
     marginLeft: 8,
     flex: 1,
+    fontWeight: "500",
   },
   warningContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FEF3C7",
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: COLORS.warning + "15",
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.warning + "30",
   },
   warningText: {
     fontSize: 12,
     color: COLORS.warning,
     marginLeft: 8,
     flex: 1,
+    fontWeight: "500",
   },
   loginButton: {
     marginBottom: 24,
@@ -348,6 +451,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textSecondary,
     marginHorizontal: 16,
+    fontWeight: "600",
   },
   socialButtonsContainer: {
     flexDirection: "row",
@@ -356,37 +460,41 @@ const styles = StyleSheet.create({
   },
   socialButton: {
     flex: 1,
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: COLORS.shadowMedium,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  socialButtonGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.grayLight,
-    borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 16,
     paddingHorizontal: 16,
   },
   socialButtonText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.textPrimary,
+    fontWeight: "700",
+    color: COLORS.white,
     marginLeft: 8,
   },
   signupContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: "auto",
+    marginTop: 16,
   },
   signupText: {
     fontSize: 16,
     color: COLORS.textSecondary,
+    fontWeight: "500",
   },
   signupLink: {
     fontSize: 16,
     color: COLORS.primary,
-    fontWeight: "600",
+    fontWeight: "700",
   },
 })
-
-export default LoginScreen

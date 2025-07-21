@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolateColor } from "react-native-reanimated"
 import { COLORS } from "../constants/colors"
 
 const InputField = ({
@@ -22,8 +23,55 @@ const InputField = ({
   numberOfLines = 1,
   autoCapitalize = "sentences",
 }) => {
-  // Removed isFocused state
+  const [isFocused, setIsFocused] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+
+  const focusAnimation = useSharedValue(0)
+  const labelAnimation = useSharedValue(0)
+
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    const borderColor = interpolateColor(
+      focusAnimation.value,
+      [0, 1],
+      [COLORS.grayLight, COLORS.primary]
+    )
+    
+    return {
+      borderColor,
+      shadowOpacity: withTiming(focusAnimation.value * 0.1, { duration: 200 }),
+      transform: [{ scale: withTiming(1 + focusAnimation.value * 0.01, { duration: 200 }) }],
+    }
+  })
+
+  const animatedLabelStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateY: withTiming(labelAnimation.value * -8, { duration: 200 }) },
+        { scale: withTiming(1 - labelAnimation.value * 0.15, { duration: 200 }) },
+      ],
+      color: interpolateColor(
+        focusAnimation.value,
+        [0, 1],
+        [COLORS.textSecondary, COLORS.primary]
+      ),
+    }
+  })
+
+  const handleFocus = () => {
+    setIsFocused(true)
+    focusAnimation.value = withTiming(1, { duration: 200 })
+    if (value || isFocused) {
+      labelAnimation.value = withTiming(1, { duration: 200 })
+    }
+  }
+
+  const handleBlur = () => {
+    setIsFocused(false)
+    focusAnimation.value = withTiming(0, { duration: 200 })
+    if (!value) {
+      labelAnimation.value = withTiming(0, { duration: 200 })
+    }
+  }
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword)
@@ -31,84 +79,106 @@ const InputField = ({
 
   return (
     <View style={[styles.container, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
-
-      <View
+      <Animated.View
         style={[
           styles.inputContainer,
-          // Removed isFocused && styles.inputContainerFocused,
+          animatedContainerStyle,
           error && styles.inputContainerError,
           !editable && styles.inputContainerDisabled,
         ]}
       >
         {leftIcon && (
           <View style={styles.leftIconContainer}>
-            <Ionicons name={leftIcon} size={20} color={COLORS.gray} />
+            <Ionicons 
+              name={leftIcon} 
+              size={20} 
+              color={isFocused ? COLORS.primary : COLORS.gray} 
+            />
           </View>
         )}
 
-        <TextInput
-          style={[
-            styles.input,
-            leftIcon && styles.inputWithLeftIcon,
-            (rightIcon || secureTextEntry) && styles.inputWithRightIcon,
-            multiline && styles.multilineInput,
-          ]}
-          placeholder={placeholder}
-          placeholderTextColor={COLORS.textSecondary}
-          value={value}
-          onChangeText={onChangeText}
-          secureTextEntry={secureTextEntry && !showPassword}
-          keyboardType={keyboardType}
-          // Removed onFocus and onBlur props
-          editable={editable}
-          multiline={multiline}
-          numberOfLines={numberOfLines}
-          textAlignVertical={multiline ? "top" : "center"}
-          autoCapitalize={autoCapitalize}
-          autoCorrect={false}
-          spellCheck={false}
-        />
+        <View style={styles.inputWrapper}>
+          {label && (
+            <Animated.Text style={[styles.floatingLabel, animatedLabelStyle]}>
+              {label}
+            </Animated.Text>
+          )}
+          <TextInput
+            style={[
+              styles.input,
+              leftIcon && styles.inputWithLeftIcon,
+              (rightIcon || secureTextEntry) && styles.inputWithRightIcon,
+              multiline && styles.multilineInput,
+              label && styles.inputWithFloatingLabel,
+            ]}
+            placeholder={isFocused ? "" : placeholder}
+            placeholderTextColor={COLORS.textSecondary}
+            value={value}
+            onChangeText={onChangeText}
+            secureTextEntry={secureTextEntry && !showPassword}
+            keyboardType={keyboardType}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            editable={editable}
+            multiline={multiline}
+            numberOfLines={numberOfLines}
+            textAlignVertical={multiline ? "top" : "center"}
+            autoCapitalize={autoCapitalize}
+            autoCorrect={false}
+            spellCheck={false}
+          />
+        </View>
 
         {secureTextEntry && (
           <TouchableOpacity style={styles.rightIconContainer} onPress={togglePasswordVisibility}>
-            <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={COLORS.gray} />
+            <Ionicons 
+              name={showPassword ? "eye-off-outline" : "eye-outline"} 
+              size={20} 
+              color={isFocused ? COLORS.primary : COLORS.gray} 
+            />
           </TouchableOpacity>
         )}
 
         {rightIcon && !secureTextEntry && (
           <TouchableOpacity style={styles.rightIconContainer} onPress={onRightIconPress}>
-            <Ionicons name={rightIcon} size={20} color={COLORS.gray} />
+            <Ionicons 
+              name={rightIcon} 
+              size={20} 
+              color={isFocused ? COLORS.primary : COLORS.gray} 
+            />
           </TouchableOpacity>
         )}
-      </View>
+      </Animated.View>
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && (
+        <Animated.View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={14} color={COLORS.error} />
+          <Text style={styles.errorText}>{error}</Text>
+        </Animated.View>
+      )}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.textPrimary,
-    marginBottom: 8,
+    marginBottom: 20,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
+    backgroundColor: COLORS.surface,
+    borderWidth: 2,
     borderColor: COLORS.grayLight,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: 16,
-    minHeight: 50,
+    minHeight: 56,
+    shadowColor: COLORS.shadowLight,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  // Removed inputContainerFocused style
   inputContainerError: {
     borderColor: COLORS.error,
   },
@@ -116,11 +186,29 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.grayLight,
     opacity: 0.6,
   },
+  inputWrapper: {
+    flex: 1,
+    position: "relative",
+  },
+  floatingLabel: {
+    position: "absolute",
+    left: 0,
+    top: 18,
+    fontSize: 16,
+    fontWeight: "500",
+    color: COLORS.textSecondary,
+    zIndex: 1,
+  },
   input: {
     flex: 1,
     fontSize: 16,
     color: COLORS.textPrimary,
-    paddingVertical: 12,
+    paddingVertical: 16,
+    fontWeight: "500",
+  },
+  inputWithFloatingLabel: {
+    paddingTop: 24,
+    paddingBottom: 8,
   },
   inputWithLeftIcon: {
     marginLeft: 12,
@@ -129,22 +217,30 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   multilineInput: {
-    paddingTop: 12,
-    paddingBottom: 12,
-    minHeight: 80,
+    paddingTop: 16,
+    paddingBottom: 16,
+    minHeight: 100,
   },
   leftIconContainer: {
     marginRight: 8,
+    padding: 4,
   },
   rightIconContainer: {
     marginLeft: 8,
-    padding: 4,
+    padding: 8,
+    borderRadius: 8,
+  },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    marginLeft: 4,
   },
   errorText: {
     fontSize: 12,
     color: COLORS.error,
-    marginTop: 4,
-    marginLeft: 4,
+    marginLeft: 6,
+    fontWeight: "500",
   },
 })
 
