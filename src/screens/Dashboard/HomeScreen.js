@@ -2,7 +2,6 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
-import Animated, { FadeInDown, FadeInUp, SlideInRight } from "react-native-reanimated"
 import { COLORS } from "../../constants/colors"
 import CustomButton from "../../components/CustomButton"
 
@@ -12,10 +11,7 @@ const CARD_GAP = 12
 const CARD_WIDTH = (width - 2 * SCREEN_HORIZONTAL_PADDING - 2 * CARD_GAP) / 3
 
 const DashboardCard = ({ icon, title, value, gradient, delay = 0 }) => (
-  <Animated.View 
-    entering={FadeInDown.delay(delay).springify()}
-    style={styles.summaryCard}
-  >
+  <View style={styles.summaryCard}>
     <LinearGradient
       colors={gradient}
       style={styles.summaryCardGradient}
@@ -29,14 +25,11 @@ const DashboardCard = ({ icon, title, value, gradient, delay = 0 }) => (
       <Text style={styles.summaryCardTitle}>{title}</Text>
       <View style={styles.summaryCardGlow} />
     </LinearGradient>
-  </Animated.View>
+  </View>
 )
 
 const UpdateCard = ({ icon, title, date, buttonText, onPress, gradient, delay = 0 }) => (
-  <Animated.View 
-    entering={SlideInRight.delay(delay).springify()}
-    style={styles.updateCard}
-  >
+  <View style={styles.updateCard}>
     <LinearGradient
       colors={["rgba(255,255,255,0.9)", "rgba(255,255,255,0.7)"]}
       style={styles.updateCardGradient}
@@ -63,7 +56,7 @@ const UpdateCard = ({ icon, title, date, buttonText, onPress, gradient, delay = 
         style={styles.updateButton}
       />
     </LinearGradient>
-  </Animated.View>
+  </View>
 )
 
 const HomeScreen = ({ navigation }) => {
@@ -88,10 +81,7 @@ const HomeScreen = ({ navigation }) => {
         >
           <View style={styles.headerPattern} />
           
-          <Animated.View 
-            entering={FadeInUp.springify()}
-            style={styles.headerTopRow}
-          >
+          <View style={styles.headerTopRow}>
             <TouchableOpacity onPress={openDrawer} style={styles.drawerToggle}>
               <LinearGradient
                 colors={["rgba(255,255,255,0.2)", "rgba(255,255,255,0.1)"]}
@@ -109,12 +99,9 @@ const HomeScreen = ({ navigation }) => {
                 <Ionicons name="settings-outline" size={20} color={COLORS.white} />
               </LinearGradient>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
 
-          <Animated.View 
-            entering={FadeInUp.delay(200).springify()}
-            style={styles.headerUserInfo}
-          >
+          <View style={styles.headerUserInfo}>
             <LinearGradient
               colors={["rgba(255,255,255,0.25)", "rgba(255,255,255,0.15)"]}
               style={styles.avatarContainer}
@@ -125,15 +112,13 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.welcomeText}>Welcome back!</Text>
               <Text style={styles.dashboardSubtitle}>Ready to learn today?</Text>
             </View>
-          </Animated.View>
+          </View>
         </LinearGradient>
 
         {/* Main Dashboard Content Area */}
         <View style={styles.mainContentArea}>
           {/* Summary Cards */}
-          <Animated.View entering={FadeInUp.delay(300).springify()}>
-            <Text style={styles.sectionTitle}>Your Overview</Text>
-          </Animated.View>
+          <Text style={styles.sectionTitle}>Your Overview</Text>
           
           <View style={styles.summaryGrid}>
             <DashboardCard 
@@ -181,9 +166,7 @@ const HomeScreen = ({ navigation }) => {
           </View>
 
           {/* Recent Updates */}
-          <Animated.View entering={FadeInUp.delay(700).springify()}>
-            <Text style={styles.sectionTitle}>Recent Updates</Text>
-          </Animated.View>
+          <Text style={styles.sectionTitle}>Recent Updates</Text>
           
           <UpdateCard
             icon="pencil-outline"
@@ -206,9 +189,7 @@ const HomeScreen = ({ navigation }) => {
           />
 
           {/* Quick Access */}
-          <Animated.View entering={FadeInUp.delay(900).springify()}>
-            <Text style={styles.sectionTitle}>Quick Access</Text>
-          </Animated.View>
+          <Text style={styles.sectionTitle}>Quick Access</Text>
           
           <View style={styles.quickAccessGrid}>
             <CustomButton

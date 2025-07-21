@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolateColor } from "react-native-reanimated"
 import { COLORS } from "../constants/colors"
 
 const InputField = ({
@@ -26,51 +25,12 @@ const InputField = ({
   const [isFocused, setIsFocused] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
-  const focusAnimation = useSharedValue(0)
-  const labelAnimation = useSharedValue(0)
-
-  const animatedContainerStyle = useAnimatedStyle(() => {
-    const borderColor = interpolateColor(
-      focusAnimation.value,
-      [0, 1],
-      [COLORS.grayLight, COLORS.primary]
-    )
-    
-    return {
-      borderColor,
-      shadowOpacity: withTiming(focusAnimation.value * 0.1, { duration: 200 }),
-      transform: [{ scale: withTiming(1 + focusAnimation.value * 0.01, { duration: 200 }) }],
-    }
-  })
-
-  const animatedLabelStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateY: withTiming(labelAnimation.value * -8, { duration: 200 }) },
-        { scale: withTiming(1 - labelAnimation.value * 0.15, { duration: 200 }) },
-      ],
-      color: interpolateColor(
-        focusAnimation.value,
-        [0, 1],
-        [COLORS.textSecondary, COLORS.primary]
-      ),
-    }
-  })
-
   const handleFocus = () => {
     setIsFocused(true)
-    focusAnimation.value = withTiming(1, { duration: 200 })
-    if (value || isFocused) {
-      labelAnimation.value = withTiming(1, { duration: 200 })
-    }
   }
 
   const handleBlur = () => {
     setIsFocused(false)
-    focusAnimation.value = withTiming(0, { duration: 200 })
-    if (!value) {
-      labelAnimation.value = withTiming(0, { duration: 200 })
-    }
   }
 
   const togglePasswordVisibility = () => {
@@ -79,10 +39,10 @@ const InputField = ({
 
   return (
     <View style={[styles.container, style]}>
-      <Animated.View
+      <View
         style={[
           styles.inputContainer,
-          animatedContainerStyle,
+          isFocused && styles.inputContainerFocused,
           error && styles.inputContainerError,
           !editable && styles.inputContainerDisabled,
         ]}
@@ -99,9 +59,13 @@ const InputField = ({
 
         <View style={styles.inputWrapper}>
           {label && (
-            <Animated.Text style={[styles.floatingLabel, animatedLabelStyle]}>
+            <Text style={[
+              styles.floatingLabel,
+              (isFocused || value) && styles.floatingLabelActive,
+              isFocused && styles.floatingLabelFocused
+            ]}>
               {label}
-            </Animated.Text>
+            </Text>
           )}
           <TextInput
             style={[
@@ -148,13 +112,13 @@ const InputField = ({
             />
           </TouchableOpacity>
         )}
-      </Animated.View>
+      </View>
 
       {error && (
-        <Animated.View style={styles.errorContainer}>
+        <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={14} color={COLORS.error} />
           <Text style={styles.errorText}>{error}</Text>
-        </Animated.View>
+        </View>
       )}
     </View>
   )
@@ -182,6 +146,10 @@ const styles = StyleSheet.create({
   inputContainerError: {
     borderColor: COLORS.error,
   },
+  inputContainerFocused: {
+    borderColor: COLORS.primary,
+    shadowOpacity: 0.1,
+  },
   inputContainerDisabled: {
     backgroundColor: COLORS.grayLight,
     opacity: 0.6,
@@ -198,6 +166,12 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: COLORS.textSecondary,
     zIndex: 1,
+  },
+  floatingLabelActive: {
+    transform: [{ translateY: -8 }, { scale: 0.85 }],
+  },
+  floatingLabelFocused: {
+    color: COLORS.primary,
   },
   input: {
     flex: 1,

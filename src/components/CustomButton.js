@@ -1,9 +1,7 @@
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated"
 import { COLORS } from "../constants/colors"
 
-const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity)
 
 const CustomButton = ({
   title,
@@ -15,24 +13,6 @@ const CustomButton = ({
   variant = "primary",
   size = "medium",
 }) => {
-  const scale = useSharedValue(1)
-  const opacity = useSharedValue(1)
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }))
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.95, { damping: 15, stiffness: 300 })
-    opacity.value = withTiming(0.8, { duration: 100 })
-  }
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 })
-    opacity.value = withTiming(1, { duration: 100 })
-  }
-
   const getButtonStyle = () => {
     switch (variant) {
       case "secondary":
@@ -90,13 +70,11 @@ const CustomButton = ({
 
   if (variant === "primary" || variant === "secondary" || variant === "accent" || variant === "success" || variant === "error" || variant === "warning") {
     return (
-      <AnimatedTouchableOpacity
-        style={[styles.button, getSizeStyle(), animatedStyle, style]}
+      <TouchableOpacity
+        style={[styles.button, getSizeStyle(), style]}
         onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
         disabled={disabled || loading}
-        activeOpacity={1}
+        activeOpacity={0.8}
       >
         <LinearGradient
           colors={getGradientColors()}
@@ -110,25 +88,23 @@ const CustomButton = ({
             <Text style={[getTextStyle(), textStyle]}>{title}</Text>
           )}
         </LinearGradient>
-      </AnimatedTouchableOpacity>
+      </TouchableOpacity>
     )
   }
 
   return (
-    <AnimatedTouchableOpacity
-      style={[styles.button, getButtonStyle(), getSizeStyle(), animatedStyle, style]}
+    <TouchableOpacity
+      style={[styles.button, getButtonStyle(), getSizeStyle(), style]}
       onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
       disabled={disabled || loading}
-      activeOpacity={1}
+      activeOpacity={0.8}
     >
       {loading ? (
         <ActivityIndicator color={variant === "outline" || variant === "ghost" ? COLORS.primary : COLORS.white} size="small" />
       ) : (
         <Text style={[getTextStyle(), textStyle]}>{title}</Text>
       )}
-    </AnimatedTouchableOpacity>
+    </TouchableOpacity>
   )
 }
 

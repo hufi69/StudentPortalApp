@@ -15,7 +15,6 @@ import {
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
-import Animated, { FadeInDown, FadeInUp, SlideInRight } from "react-native-reanimated"
 
 import CustomButton from "../../components/CustomButton"
 import InputField from "../../components/InputField"
@@ -123,18 +122,9 @@ const LoginScreen = ({ navigation }) => {
 
       {/* Floating Elements */}
       <View style={styles.floatingElements}>
-        <Animated.View 
-          entering={FadeInUp.delay(100).springify()}
-          style={[styles.floatingCircle, styles.circle1]} 
-        />
-        <Animated.View 
-          entering={FadeInUp.delay(200).springify()}
-          style={[styles.floatingCircle, styles.circle2]} 
-        />
-        <Animated.View 
-          entering={FadeInUp.delay(300).springify()}
-          style={[styles.floatingCircle, styles.circle3]} 
-        />
+        <View style={[styles.floatingCircle, styles.circle1]} />
+        <View style={[styles.floatingCircle, styles.circle2]} />
+        <View style={[styles.floatingCircle, styles.circle3]} />
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardView}>
@@ -144,10 +134,7 @@ const LoginScreen = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
         >
           {/* Header Section */}
-          <Animated.View 
-            entering={FadeInDown.springify()}
-            style={styles.headerSection}
-          >
+          <View style={styles.headerSection}>
             <View style={styles.logoContainer}>
               <LinearGradient
                 colors={["rgba(255,255,255,0.3)", "rgba(255,255,255,0.1)"]}
@@ -158,13 +145,10 @@ const LoginScreen = ({ navigation }) => {
               <Text style={styles.logoText}>Student Portal</Text>
               <Text style={styles.logoSubtext}>Your Gateway to Academic Excellence</Text>
             </View>
-          </Animated.View>
+          </View>
 
           {/* Form Container */}
-          <Animated.View 
-            entering={SlideInRight.delay(400).springify()}
-            style={styles.formContainer}
-          >
+          <View style={styles.formContainer}>
             <LinearGradient
               colors={["rgba(255,255,255,0.95)", "rgba(255,255,255,0.9)"]}
               style={styles.formGradient}
@@ -201,25 +185,19 @@ const LoginScreen = ({ navigation }) => {
                 </TouchableOpacity>
 
                 {errors.general && (
-                  <Animated.View 
-                    entering={FadeInDown.springify()}
-                    style={styles.errorContainer}
-                  >
+                  <View style={styles.errorContainer}>
                     <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
                     <Text style={styles.generalErrorText}>{errors.general}</Text>
-                  </Animated.View>
+                  </View>
                 )}
 
                 {loginAttempts > 2 && (
-                  <Animated.View 
-                    entering={FadeInDown.springify()}
-                    style={styles.warningContainer}
-                  >
+                  <View style={styles.warningContainer}>
                     <Ionicons name="warning-outline" size={16} color={COLORS.warning} />
                     <Text style={styles.warningText}>
                       {5 - loginAttempts} attempts remaining before temporary lockout
                     </Text>
-                  </Animated.View>
+                  </View>
                 )}
 
                 <CustomButton
@@ -268,7 +246,7 @@ const LoginScreen = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
             </LinearGradient>
-          </Animated.View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
